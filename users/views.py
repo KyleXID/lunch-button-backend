@@ -35,7 +35,8 @@ class UserView(View):
     def get(self, request):
         return JsonResponse({
             "user_email"    : request.user.user_email,
-            "user_nickname" : request.user.user_nickname
+            "user_nickname" : request.user.user_nickname,
+            "user_summary"  : request.user.summary
         })
 
 class AuthView(View):
@@ -71,7 +72,6 @@ class KakaoAuthView(View):
             "Authorization" : "Bearer "+request.headers.get("Authorization", None)
         }
         response    = requests.get(url, headers=kakao_token).json()
-        print(response)
         
         if User.objects.filter(social_id = response["id"]).exists():
             user           = User.objects.get(social_id = response["id"])
@@ -125,7 +125,7 @@ class GoogleAuthView(View):
             
             return JsonResponse(            
                         {
-                            "access_token"  : encoded_jwt_id.decode("utf-8"), 
+                            "access_token"  : encoded_jwt_id.decode("utf-8"),
                             "user_nickname" : user.user_nickname
                         }
                     )
@@ -214,3 +214,18 @@ class BlockUserView(View):
         blocked_list = list(BlockedUser.objects.filter(user_id = user.id).values("blocked__user_nickname"))
 
         return JsonResponse({"blocked_list" : blocked_list})
+
+class SummaryView(View):
+
+    @login_check
+    def post(self, request):
+        user = request.user
+        summary = json.loads(request.body)
+        
+        if user.summary is None :
+            user.summary = summary["summary"]
+            user.save()
+        else:
+            user.summary = summary["summary"]
+            user.save(update_fields=["summary"])
+        return JsonResponse({"message" : "소개문을 성공적으로 변경하였습니다."})

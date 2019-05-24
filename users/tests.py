@@ -86,7 +86,8 @@ class UserTest(TestCase):
             response.json(),
                 {
                     "user_email"    : user.user_email,
-                    "user_nickname" : user.user_nickname
+                    "user_nickname" : user.user_nickname,
+                    "user_summary"  : None
                 }
         )
 
@@ -115,7 +116,12 @@ class UserTest(TestCase):
         access_token = response.json()["access_token"]
 
         test     = {"user_nickname":"testnick2"}
-        response = c.post("/user/update", json.dumps(test), **{"HTTP_AUTHORIZATION":access_token, "content_type":"application/json"})
+        response = c.post(
+            "/user/update",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION":access_token,"content_type":"application/json"}
+        )
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"message" : "닉네임을 성공적으로 변경하였습니다."})
 
@@ -127,7 +133,11 @@ class UserTest(TestCase):
         access_token = response.json()["access_token"]
 
         test     = {"user_password":"12345"}
-        response = c.post("/user/update", json.dumps(test), **{"HTTP_AUTHORIZATION":access_token, "content_type":"application/json"})
+        response = c.post(
+            "/user/update",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION":access_token, "content_type":"application/json"}
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"message" : "비밀번호를 성공적으로 변경하였습니다."})
 
@@ -139,7 +149,11 @@ class UserTest(TestCase):
         access_token = response.json()["access_token"]
 
         test     = {"user_nickname":"testnick2", "user_password":"12345"}
-        response = c.post("/user/update", json.dumps(test), **{'HTTP_AUTHORIZATION':access_token, 'content_type':"application/json"})
+        response = c.post(
+            "/user/update",
+            json.dumps(test),
+            **{'HTTP_AUTHORIZATION':access_token, 'content_type':"application/json"}
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"message" : "회원정보를 성공적으로 변경하였습니다."})
 
@@ -152,7 +166,12 @@ class UserTest(TestCase):
         access_token = response.json()["access_token"]
         
         test         = {"user_id":User.objects.get(user_email="test12").id}
-        response     = c.post("/user/block", json.dumps(test), **{"HTTP_AUTHORIZATION":access_token, "content_type":"application/json"})
+        response     = c.post(
+            "/user/block",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION":access_token,
+                "content_type":"application/json"}
+        )
         blocked_list = list(BlockedUser.objects.filter(user_id = user.id).values("blocked__user_nickname"))
 
         self.assertEqual(response.status_code, 200)
@@ -171,6 +190,25 @@ class UserTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"blocked_list" : blocked_list})
+
+    def test_summary_insert(self):
+        c = Client()
+
+        user         = User.objects.get(user_email ="test1")
+        test         = {"user_email":"test1", "user_password":"1234"}
+        response     = c.post("/user/auth", json.dumps(test), content_type="application/json")
+
+        access_token = response.json()["access_token"]
+
+        test         = {"summary":"안녕하세요. 테스트유저입니다."}
+        response     = c.post(
+            "/user/summary",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION":access_token, "content_type":"application/json"}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"message" : "소개문을 성공적으로 변경하였습니다."})
 
     def tearDown(self):
         User.objects.filter(user_email="test1").delete()
