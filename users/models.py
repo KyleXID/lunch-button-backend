@@ -5,6 +5,7 @@ class User(models.Model):
     user_nickname  = models.CharField(max_length=45)
     user_password  = models.CharField(max_length=200, null=True)
     social_id      = models.IntegerField(null=True)
+    thumbnail      = models.CharField(max_length=200, default=None, null=True)
     summary        = models.TextField(null=True) 
     block_users    = models.ManyToManyField(
         "self", 

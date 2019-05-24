@@ -1,4 +1,5 @@
 import json
+import boto3
 
 from django.test import TestCase
 from django.test import Client
@@ -87,7 +88,8 @@ class UserTest(TestCase):
                 {
                     "user_email"    : user.user_email,
                     "user_nickname" : user.user_nickname,
-                    "user_summary"  : None
+                    "user_summary"  : None,
+                    "thumbnail"     : None
                 }
         )
 
