@@ -3,15 +3,18 @@ import json
 from django.test import TestCase
 from django.test import Client
 
-from users.models import User
+from users.models import *
 
 class UserTest(TestCase):
 
     def setUp(self):
         c = Client()
 
-        test     = {"user_email":"test1", "user_nickname":"testnick1", "user_password":"1234"}
-        response = c.post("/user", json.dumps(test), content_type="application/json")
+        test = {"user_email":"test1", "user_nickname":"testnick1", "user_password":"1234"}
+        c.post("/user", json.dumps(test), content_type="application/json")
+
+        test = {"user_email":"test12", "user_nickname":"testnick12", "user_password":"1234"}
+        c.post("/user", json.dumps(test), content_type="application/json")
 
     def test_user_signup_check(self):
         c = Client()
@@ -140,5 +143,35 @@ class UserTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"message" : "회원정보를 성공적으로 변경하였습니다."})
 
+    def test_user_blocked_check(self):
+        c = Client()
+        
+        user         = User.objects.get(user_email ="test1")
+        test         = {"user_email":"test1", "user_password":"1234"}
+        response     = c.post("/user/auth", json.dumps(test), content_type="application/json")
+        access_token = response.json()["access_token"]
+        
+        test         = {"user_id":User.objects.get(user_email="test12").id}
+        response     = c.post("/user/block", json.dumps(test), **{"HTTP_AUTHORIZATION":access_token, "content_type":"application/json"})
+        blocked_list = list(BlockedUser.objects.filter(user_id = user.id).values("blocked__user_nickname"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"block_user_check" : True, "blocked_list" : blocked_list})
+    
+    def test_user_blocked_list(self):
+        c = Client()
+        
+        user         = User.objects.get(user_email ="test1")
+        test         = {"user_email":"test1", "user_password":"1234"}
+        response     = c.post("/user/auth", json.dumps(test), content_type="application/json")
+        access_token = response.json()["access_token"]
+
+        response     = c.get("/user/block", **{"HTTP_AUTHORIZATION":access_token, "content_type":"application/json"})
+        blocked_list = list(BlockedUser.objects.filter(user_id = user.id).values("blocked__user_nickname"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"blocked_list" : blocked_list})
+
     def tearDown(self):
         User.objects.filter(user_email="test1").delete()
+        User.objects.filter(user_email="test12").delete()

@@ -11,4 +11,5 @@ urlpatterns = [
     path('/kakaouser', KakaoUserView.as_view()),
     path('/googleauth', GoogleAuthView.as_view()),
     path('/googleuser', GoogleUserView.as_view()),
+    path('/block', BlockUserView.as_view()),
 ]
