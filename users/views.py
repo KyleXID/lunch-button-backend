@@ -5,7 +5,7 @@ from django.views import View
 from django.http import JsonResponse, HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
 
-from .models import User
+from .models import *
 from .utils import login_check
 from lunch_button.settings import lunch_secret
 
@@ -188,10 +188,29 @@ class UserUpdatelView(View):
             return JsonResponse({"message" : "회원정보를 변경하는데 실패하였습니다."}, status=400)
 
 
-class HaterView(View):
+class BlockUserView(View):
 
     @login_check
     def post(self, request):
+        user       = request.user
+        block      = json.loads(request.body)
+        block_user = User.objects.get(id = block["user_id"])
+
+        if user.block_users.filter(id = block_user.id).exists():
+            user.block_users.remove(block_user)
+            check = False
+        else:
+            user.block_users.add(block_user)
+            check = True
+
+        blocked_list = list(BlockedUser.objects.filter(user_id = user.id).values("blocked__user_nickname"))
+
+        return JsonResponse({"block_user_check" : check, "blocked_list" : blocked_list})
+    
+    @login_check
+    def get(self, request):
         user = request.user
-        hate_user = json.loads(request.body)
-        pass
+        
+        blocked_list = list(BlockedUser.objects.filter(user_id = user.id).values("blocked__user_nickname"))
+
+        return JsonResponse({"blocked_list" : blocked_list})
