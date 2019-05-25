@@ -13,4 +13,5 @@ urlpatterns = [
     path('/googleuser', GoogleUserView.as_view()),
     path('/block', BlockUserView.as_view()),
     path('/summary', SummaryView.as_view()),
+    path('/thumbnail', UserThumbnailView.as_view()),
 ]

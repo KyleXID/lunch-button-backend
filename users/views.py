@@ -1,4 +1,9 @@
-import requests, json, bcrypt, jwt
+import jwt
+import json
+import uuid
+import boto3
+import bcrypt
+import requests
 import my_settings
 
 from django.views import View
@@ -7,6 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from .models import *
 from .utils import login_check
+from lunch_button import settings
 from lunch_button.settings import lunch_secret
 
 class UserView(View):
@@ -36,7 +42,8 @@ class UserView(View):
         return JsonResponse({
             "user_email"    : request.user.user_email,
             "user_nickname" : request.user.user_nickname,
-            "user_summary"  : request.user.summary
+            "user_summary"  : request.user.summary,
+            "thumbnail"     : request.user.thumbnail
         })
 
 class AuthView(View):
@@ -229,3 +236,39 @@ class SummaryView(View):
             user.summary = summary["summary"]
             user.save(update_fields=["summary"])
         return JsonResponse({"message" : "소개문을 성공적으로 변경하였습니다."})
+
+class UserThumbnailView(View):
+
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id     = settings.aws_access_key_id,
+        aws_secret_access_key = settings.aws_secret_access_key
+    )
+    
+    @login_check
+    def post(self, request):
+        user      = request.user
+        file      = request.FILES["thumbnail"]
+        extension = file.name.split('.')[-1]
+        file_name = str(user.id)+uuid.uuid4().hex+"."+extension
+        
+        self.s3_client.upload_fileobj(
+            file, 
+            "lunchbutton",
+            file_name,
+            ExtraArgs={
+                "ContentType": file.content_type
+            }
+        )
+        
+        thumbnail_url = "https://s3.ap-northeast-2.amazonaws.com/lunchbutton/"+file_name
+
+        user.thumbnail = thumbnail_url
+        user.save()
+
+        return JsonResponse(
+                    {
+                        "message" : "프로필 이미지 업로드 성공",
+                        "img_url" : thumbnail_url
+                    }
+                )
