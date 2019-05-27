@@ -43,7 +43,8 @@ class UserView(View):
             "user_email"    : request.user.user_email,
             "user_nickname" : request.user.user_nickname,
             "user_summary"  : request.user.summary,
-            "thumbnail"     : request.user.thumbnail
+            "thumbnail"     : request.user.thumbnail,
+            "community"     : request.user.user_community.commu_name if request.user.user_community is not None else(None) 
         })
 
 class AuthView(View):

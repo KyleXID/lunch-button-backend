@@ -1,5 +1,7 @@
 from django.db import models
 
+from community.models import Community
+
 class User(models.Model):
     user_email     = models.EmailField(max_length=45)
     user_nickname  = models.CharField(max_length=45)
@@ -14,7 +16,13 @@ class User(models.Model):
         related_name   = "user",
         symmetrical    = False
     )
-
+    user_community = models.ForeignKey(
+        Community,
+        models.CASCADE,
+        related_name = "user_Community",
+        null         = True
+    )
+    
     class Meta:
         db_table = "users"
 
