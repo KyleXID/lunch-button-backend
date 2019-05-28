@@ -17,34 +17,64 @@ from lunch_button.settings import lunch_secret
 
 class UserView(View):
 
-    def post(self, request):
-        new_user = json.loads(request.body)
+    def createUserTopic(self, user_input_dic):
+        user = User.objects.get(user_email=user_input_dic["user_email"])
+        
+        if "topic" in user_input_dic:
+            
+            if len(user_input_dic["topic"]) > 3:
+                return JsonResponse({"message" : "관심토픽은 3개까지 선택가능합니다."}, status=400)
+            elif len(user_input_dic["topic"]) > 0: 
+                
+                for topic in user_input_dic["topic"]:
+                    user.favorite_topics.add(Topic.objects.get(id = topic).id)
+                    user.save()
 
-        if User.objects.filter(user_email=new_user["user_email"]).exists():
+    def post(self, request):
+        user_input_dic = json.loads(request.body)
+
+        if User.objects.filter(user_email=user_input_dic["user_email"]).exists():
             return JsonResponse({"message" : "이미 존재하는 이메일입니다."}, status=400)
-        elif User.objects.filter(user_nickname=new_user["user_nickname"]).exists():
+        elif User.objects.filter(user_nickname=user_input_dic["user_nickname"]).exists():
             return JsonResponse({"message" : "이미 존재하는 닉네임입니다."}, status=400)
         else:
-            password = bytes(new_user["user_password"], "utf-8")
+            password = bytes(user_input_dic["user_password"], "utf-8")
             hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
 
-            new_user = User(
-                    user_email     = new_user["user_email"],
-                    user_nickname  = new_user["user_nickname"],
-                    user_password  = hashed_password.decode("utf-8"),
+            user_model = User(
+                user_email     = user_input_dic["user_email"],
+                user_nickname  = user_input_dic["user_nickname"],
+                user_password  = hashed_password.decode("utf-8"),
             )
-            new_user.save()
+            user_model.save()
+
+            UserView.createUserTopic(self, user_input_dic)
 
             return JsonResponse({"message" : "회원가입을 축하드립니다."}, status=200)
 
     @login_check
     def get(self, request):
+
+        if MyFavoriteTopic.objects.filter(topic_user_id=request.user.id).exists():
+            favorite_topic = MyFavoriteTopic.objects.filter(topic_user_id=request.user.id)\
+                .values('id', 'topic_id').order_by('id')
+            favorite_topic_list = list(favorite_topic)
+            favorite_topic_list = [
+                {
+                    'topic_id' : topic['topic_id'],
+                    'topic_name' : Topic.objects.get(id=topic['topic_id']).topic_name
+                } for topic in favorite_topic_list
+            ]
+        else:
+            favorite_topic_list = None
+
         return JsonResponse({
-            "user_email"    : request.user.user_email,
-            "user_nickname" : request.user.user_nickname,
-            "user_summary"  : request.user.summary,
-            "thumbnail"     : request.user.thumbnail,
-            "community"     : request.user.user_community.commu_name if request.user.user_community is not None else(None) 
+            "user_email"     : request.user.user_email,
+            "user_nickname"  : request.user.user_nickname,
+            "user_summary"   : request.user.summary,
+            "thumbnail"      : request.user.thumbnail,
+            "community"      : request.user.user_community.commu_name if request.user.user_community is not None else(None),
+            "favorite_topic" : favorite_topic_list
         })
 
 class AuthView(View):
@@ -104,21 +134,23 @@ class KakaoUserView(View):
         }
         response    = requests.get(url, headers=kakao_token).json()
         
-        new_kakao_user = json.loads(request.body)
+        user_input_dic = json.loads(request.body)
 
         if User.objects.filter(social_id = response["id"]).exists():
             return JsonResponse({"message" : "이미 가입한 계정입니다."}, status=400)
-        elif User.objects.filter(user_email = new_kakao_user["user_email"]).exists():
+        elif User.objects.filter(user_email = user_input_dic["user_email"]).exists():
             return JsonResponse({"message" : "이미 존재하는 이메일입니다."}, status=400)
-        elif User.objects.filter(user_nickname = new_kakao_user["user_nickname"]).exists():
+        elif User.objects.filter(user_nickname = user_input_dic["user_nickname"]).exists():
             return JsonResponse({"message" : "이미 존재하는 닉네임입니다."}, status=400)
         else:
-            new_user = User(
-                    user_email     = new_kakao_user["user_email"],
-                    user_nickname  = new_kakao_user["user_nickname"],
+            user_model = User(
+                    user_email     = user_input_dic["user_email"],
+                    user_nickname  = user_input_dic["user_nickname"],
                     social_id      = response["id"]
             )
-            new_user.save()
+            user_model.save()
+
+            UserView.createUserTopic(self, user_input_dic)
 
             return JsonResponse({"message" : "회원가입을 축하드립니다."}, status=200)
 
@@ -144,21 +176,23 @@ class GoogleAuthView(View):
 class GoogleUserView(View):
 
     def post(self, request):
-        google_user = json.loads(request.body)
+        user_input_dic = json.loads(request.body)
 
-        if User.objects.filter(social_id = google_user["social_id"]).exists():
+        if User.objects.filter(social_id = user_input_dic["social_id"]).exists():
             return JsonResponse({"message" : "이미 가입한 계정입니다."}, status=400)
-        elif User.objects.filter(user_email = google_user["user_email"]).exists():
+        elif User.objects.filter(user_email = user_input_dic["user_email"]).exists():
             return JsonResponse({"message" : "이미 존재하는 이메일입니다."}, status=400)
-        elif User.objects.filter(user_nickname = google_user["user_nickname"]).exists():
+        elif User.objects.filter(user_nickname = user_input_dic["user_nickname"]).exists():
             return JsonResponse({"message" : "이미 존재하는 닉네임입니다."}, status=400)
         else:
-            new_user = User(
-                    user_email     = google_user["user_email"], 
-                    user_nickname  = google_user["user_nickname"],
-                    social_id      = google_user["social_id"]
+            user_model = User(
+                    user_email     = user_input_dic["user_email"], 
+                    user_nickname  = user_input_dic["user_nickname"],
+                    social_id      = user_input_dic["social_id"]
             )
-            new_user.save()
+            user_model.save()
+
+            UserView.createUserTopic(self, user_input_dic)
 
             return JsonResponse({"message" : "회원가입을 축하드립니다."}, status=200)
 

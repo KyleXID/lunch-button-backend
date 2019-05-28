@@ -86,11 +86,12 @@ class UserTest(TestCase):
         self.assertEqual(
             response.json(),
                 {
-                    "user_email"    : user.user_email,
-                    "user_nickname" : user.user_nickname,
-                    "user_summary"  : None,
-                    "thumbnail"     : None,
-                    "community"     : None
+                    "user_email"     : user.user_email,
+                    "user_nickname"  : user.user_nickname,
+                    "user_summary"   : None,
+                    "thumbnail"      : None,
+                    "community"      : None,
+                    "favorite_topic" : None
                 }
         )
 

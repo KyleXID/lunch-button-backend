@@ -18,4 +18,5 @@ from django.urls import include, path
 urlpatterns = [
     path('user', include('users.urls')),
     path('community', include('community.urls')),
+    path('topics', include('topics.urls')),
 ]
