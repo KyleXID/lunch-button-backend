@@ -15,7 +15,11 @@ Including another URLconf
 """
 from django.urls import include, path
 
+from . import views
+from .views import PingView
+
 urlpatterns = [
+    path('ping', PingView.as_view()),
     path('user', include('users.urls')),
     path('community', include('community.urls')),
     path('topics', include('topics.urls')),
