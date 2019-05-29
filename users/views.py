@@ -17,6 +17,14 @@ from lunch_button.settings import lunch_secret
 
 class UserView(View):
 
+    def createUserCommunity(self, user_input_dic):
+        user      = User.objects.get(user_email=user_input_dic["user_email"])
+        community = user_input_dic["community_id"]
+        community = Community.objects.get(id = community)
+
+        user.user_community = community
+        user.save()
+
     def createUserTopic(self, user_input_dic):
         user = User.objects.get(user_email=user_input_dic["user_email"])
         
@@ -47,7 +55,8 @@ class UserView(View):
                 user_password  = hashed_password.decode("utf-8"),
             )
             user_model.save()
-
+            
+            UserView.createUserCommunity(self, user_input_dic)
             UserView.createUserTopic(self, user_input_dic)
 
             return JsonResponse({"message" : "회원가입을 축하드립니다."}, status=200)
@@ -73,7 +82,7 @@ class UserView(View):
             "user_nickname"  : request.user.user_nickname,
             "user_summary"   : request.user.summary,
             "thumbnail"      : request.user.thumbnail,
-            "community"      : request.user.user_community.commu_name if request.user.user_community is not None else(None),
+            "community"      : request.user.user_community.commu_name if request.user.user_community is not None else None,
             "favorite_topic" : favorite_topic_list
         })
 
@@ -149,7 +158,8 @@ class KakaoUserView(View):
                     social_id      = response["id"]
             )
             user_model.save()
-
+            
+            UserView.createUserCommunity(self, user_input_dic)
             UserView.createUserTopic(self, user_input_dic)
 
             return JsonResponse({"message" : "회원가입을 축하드립니다."}, status=200)
@@ -188,10 +198,12 @@ class GoogleUserView(View):
             user_model = User(
                     user_email     = user_input_dic["user_email"], 
                     user_nickname  = user_input_dic["user_nickname"],
-                    social_id      = user_input_dic["social_id"]
+                    social_id      = user_input_dic["social_id"],
+                    thumbnail      = user_input_dic["user_thumbnail"] if "user_thumbnail" in user_input_dic else None
             )
             user_model.save()
-
+            
+            UserView.createUserCommunity(self, user_input_dic)
             UserView.createUserTopic(self, user_input_dic)
 
             return JsonResponse({"message" : "회원가입을 축하드립니다."}, status=200)
@@ -245,7 +257,7 @@ class BlockUserView(View):
             user.block_users.add(block_user)
             check = True
 
-        blocked_list = list(BlockedUser.objects.filter(user_id = user.id).values("blocked__user_nickname"))
+        blocked_list = list(BlockedUser.objects.filter(user_id = user.id).values("blocked__user_nickname", "blocked__id"))
 
         return JsonResponse({"block_user_check" : check, "blocked_list" : blocked_list})
     
@@ -253,7 +265,7 @@ class BlockUserView(View):
     def get(self, request):
         user = request.user
         
-        blocked_list = list(BlockedUser.objects.filter(user_id = user.id).values("blocked__user_nickname"))
+        blocked_list = list(BlockedUser.objects.filter(user_id = user.id).values("blocked__user_nickname","blocked__id"))
 
         return JsonResponse({"blocked_list" : blocked_list})
 
@@ -282,6 +294,7 @@ class UserThumbnailView(View):
     
     @login_check
     def post(self, request):
+
         user      = request.user
         file      = request.FILES["thumbnail"]
         extension = file.name.split('.')[-1]
@@ -295,7 +308,7 @@ class UserThumbnailView(View):
                 "ContentType": file.content_type
             }
         )
-        
+
         thumbnail_url = "https://s3.ap-northeast-2.amazonaws.com/lunchbutton/"+file_name
 
         user.thumbnail = thumbnail_url

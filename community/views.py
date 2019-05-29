@@ -9,11 +9,9 @@ from users.utils import login_check
 
 class CommunityView(View):
     
-    @login_check
     def get(self, request):
         community = Community.objects.all()
 
-        user   = request.user
         search = request.GET.get("search", "")
 
         if search:
