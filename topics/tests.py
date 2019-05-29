@@ -10,8 +10,18 @@ class TopicTest(TestCase):
 
     def setUp(self):
         c = Client()
+        
+        Community.objects.create(
+            zip_code = "06168",
+            commu_name = "위워크 삼성역점"
+        )
 
-        test = {"user_email":"test1", "user_nickname":"testnick1", "user_password":"1234"}
+        test = {
+            "user_email":"test1",
+            "user_nickname":"testnick1",
+            "user_password":"1234",
+            "community_id":Community.objects.get(zip_code="06168").id
+        }
         c.post("/user", json.dumps(test), content_type="application/json")
         
         Topic.objects.create(topic_name = "트와이스")

@@ -9,6 +9,7 @@ docutils==0.14
 idna==2.8
 jmespath==0.9.4
 mysql-connector-python==8.0.16
+Pillow==6.0.0
 protobuf==3.7.1
 pycparser==2.19
 PyJWT==1.7.1

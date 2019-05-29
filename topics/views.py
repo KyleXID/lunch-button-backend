@@ -9,13 +9,11 @@ from users.utils import login_check
 
 class TopicView(View):
     
-    @login_check
     def get(self, request):
         topics = Topic.objects.all()
 
-        user   = request.user
         search = request.GET.get("search", "")
-
+        
         if search:
             result = topics.filter(topic_name__icontains=search).values('id', 'topic_name')
             return JsonResponse({"topic_list" : list(result)})
