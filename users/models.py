@@ -4,6 +4,7 @@ from topics.models import Topic
 from community.models import Community
 
 class User(models.Model):
+    user_status    = models.CharField(max_length=45, default="topics", null=True)
     user_email     = models.EmailField(max_length=45)
     user_nickname  = models.CharField(max_length=45)
     user_password  = models.CharField(max_length=200, null=True)

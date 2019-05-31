@@ -38,29 +38,6 @@ class UserView(View):
                     user.favorite_topics.add(Topic.objects.get(id = topic).id)
                     user.save()
 
-    def post(self, request):
-        user_input_dic = json.loads(request.body)
-
-        if User.objects.filter(user_email=user_input_dic["user_email"]).exists():
-            return JsonResponse({"message" : "이미 존재하는 이메일입니다."}, status=400)
-        elif User.objects.filter(user_nickname=user_input_dic["user_nickname"]).exists():
-            return JsonResponse({"message" : "이미 존재하는 닉네임입니다."}, status=400)
-        else:
-            password = bytes(user_input_dic["user_password"], "utf-8")
-            hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
-
-            user_model = User(
-                user_email     = user_input_dic["user_email"],
-                user_nickname  = user_input_dic["user_nickname"],
-                user_password  = hashed_password.decode("utf-8"),
-            )
-            user_model.save()
-            
-            UserView.createUserCommunity(self, user_input_dic)
-            UserView.createUserTopic(self, user_input_dic)
-
-            return JsonResponse({"message" : "회원가입을 축하드립니다."}, status=200)
-
     @login_check
     def get(self, request):
 
@@ -85,6 +62,32 @@ class UserView(View):
             "community"      : request.user.user_community.commu_name if request.user.user_community is not None else None,
             "favorite_topic" : favorite_topic_list
         })
+
+class EmailUserView(View):
+
+    def post(self, request):
+        user_input_dic = json.loads(request.body)
+
+        if User.objects.filter(user_email=user_input_dic["user_email"]).exists():
+            return JsonResponse({"message" : "이미 존재하는 이메일입니다."}, status=400)
+        elif User.objects.filter(user_nickname=user_input_dic["user_nickname"]).exists():
+            return JsonResponse({"message" : "이미 존재하는 닉네임입니다."}, status=400)
+        else:
+            password = bytes(user_input_dic["user_password"], "utf-8")
+            hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
+
+            user_model = User(
+                user_email     = user_input_dic["user_email"],
+                user_nickname  = user_input_dic["user_nickname"],
+                user_password  = hashed_password.decode("utf-8"),
+            )
+            user_model.save()
+            
+            UserView.createUserCommunity(self, user_input_dic)
+            UserView.createUserTopic(self, user_input_dic)
+
+            return JsonResponse({"message" : "회원가입을 축하드립니다."}, status=200)
+
 
 class AuthView(View):
 
@@ -125,14 +128,15 @@ class KakaoAuthView(View):
             encoded_jwt_id = jwt.encode({"user_id" : user.id}, lunch_secret, algorithm="HS256")
             
             return JsonResponse(
-                        {
+                    {   
+                            "USER_EXIST"    : True,
                             "access_token"  : encoded_jwt_id.decode("utf-8"),
                             "user_nickname" : user.user_nickname
                         }
                     )
 
         else:
-            return JsonResponse({"message" : "회원 정보가 존재하지 않습니다."}, status=400)
+            return JsonResponse({"USER_EXIST" : False}, status=200)
 
 class KakaoUserView(View):
 
@@ -175,13 +179,14 @@ class GoogleAuthView(View):
             
             return JsonResponse(            
                         {
+                            "USER_EXIST"    : True,
                             "access_token"  : encoded_jwt_id.decode("utf-8"),
                             "user_nickname" : user.user_nickname
                         }
                     )
 
         else:
-            return JsonResponse({"message" : "회원 정보가 존재하지 않습니다."}, status=400)
+            return JsonResponse({"USER_EXIST" : False}, status=200)
 
 class GoogleUserView(View):
 

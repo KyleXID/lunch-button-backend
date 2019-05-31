@@ -23,4 +23,5 @@ urlpatterns = [
     path('user', include('users.urls')),
     path('community', include('community.urls')),
     path('topics', include('topics.urls')),
+    path('stages', include('stages.urls')),
 ]

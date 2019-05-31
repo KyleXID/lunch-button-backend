@@ -5,4 +5,5 @@ from .views import *
 
 urlpatterns = [          
     path('', TopicView.as_view()),
+    path('/daily', SelectOrCreateTopicView.as_view()),
 ]

@@ -56,3 +56,31 @@ class TopicView(View):
                 "favorite_topic_list" : favorite_topic_list
             }
         )
+
+class SelectOrCreateTopicView(View):
+
+    def post(self, request):
+        topics = json.loads(request.body)["topics"]
+        topic_list = []
+        topic_dic = {}
+
+        for topic in topics:
+            if self.check_exist_topic(topic):
+                topic_list.append(Topic.objects.get(topic_name=topic).id)
+            else:
+                new_topic = Topic(
+                    topic_name = topic
+                )
+                new_topic.save()
+                topic_list.append(new_topic.id)
+        
+        for topic in topic_list:
+            topic_dic[Topic.objects.get(id=topic).topic_name] = topic
+
+        return JsonResponse({"topic_list" : topic_dic})
+
+    def check_exist_topic(self,topic):
+        if Topic.objects.filter(topic_name=topic):
+            return True
+        else:
+            return False

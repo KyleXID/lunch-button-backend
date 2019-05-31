@@ -5,6 +5,7 @@ from .views import *
 
 urlpatterns = [
     path('', UserView.as_view()),
+    path('/emailuser', EmailUserView.as_view()),
     path('/auth', AuthView.as_view()),
     path('/update', UserUpdatelView.as_view()),
     path('/kakaoauth', KakaoAuthView.as_view()),

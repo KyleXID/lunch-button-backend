@@ -31,7 +31,7 @@ aws_secret_access_key = my_settings.aws_secret_access_key
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = my_settings.ALLOWED_HOSTS
 
 
 # Application definition
@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'users',
     'community',
     'topics',
+    'stages',
 ]
 
 MIDDLEWARE = [
@@ -136,10 +137,10 @@ STATIC_URL = '/static/'
 #Django-cors-headers
 #CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST = (
-    'localhost:3000',
-    'localhost:3001',
-    'localhost:3002',
-    '127.0.0.1:3000',
-    '127.0.0.1:3001',
-    '127.0.0.1:3002',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'http://127.0.0.1:3002',
 )
